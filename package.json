@@ -1,0 +1,28 @@
+{
+  "name": "sensorlog",
+  "version": "1.0.0",
+  "description": "logging and averaging of numeric stats",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dooglz/sensorlog.git"
+  },
+  "keywords": [
+    "logging",
+    "sensor",
+    "stats",
+    "average",
+    "moving",
+    "average",
+    "temperature"
+  ],
+  "author": "dooglz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dooglz/sensorlog/issues"
+  },
+  "homepage": "https://github.com/dooglz/sensorlog#readme"
+}
