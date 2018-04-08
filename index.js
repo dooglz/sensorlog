@@ -1,9 +1,9 @@
 
-let verbose = 1;
+let verbose = 4;
 let timeStorageType = "unix" //actually milseconds
 let data = [];
 let accuracy = {year:1,month:12,day:30,hour:6,minute:6,second:-1};
-let avg = {year:true,month:true,day:true,hour:true,minute:true,second:false};
+let average = {year:true,month:true,day:true,hour:true,minute:true,second:false};
 let dims = ["year","month","day","hour","minute","second"];
 let durations={year:31536000000,month:2592000000,day:86400000,hour:3600000,minute:60000,second:1000};
 let seperations = {
@@ -59,7 +59,7 @@ function buildRow(){
 	for (let f in accuracy) {
 		if(accuracy[f] != -1){
 			row.values[f] = [];
-			if(avg[f]){
+			if(average[f]){
 				if(!row.averages){row.averages = {};}
 				row.averages[f] = 0;
 			}
@@ -76,7 +76,8 @@ function formatTime(time){
 	}
 }
 
-function print(msg,lvl =0 ){
+function print(msg,lvl =0,verb = 1){
+	if(verb > verbose){return;}
 	msg = "SL-" + (new Date()).toISOString()+": " + msg;
 	if(lvl == 0){
 		console.log(msg);
@@ -99,9 +100,7 @@ function log (who, what, when = (new Date())){
 		return;
 	}
 	when = formatTime(when);
-	if (verbose > 0 ){
-		print(who + " - " + what  + " - " + when);
-	}
+	print(who + " - " + what  + " - " + when);
 
 	let datarow = data.find(function(element) {
   		return element.name === who;
@@ -115,32 +114,127 @@ function log (who, what, when = (new Date())){
 		}
 	}
 
-	for (let d of dims.slice().reverse()) {
+	let datapoint = {t:when,d:what};
+	save(datarow,datapoint);
+	normalize(datarow);
+}
+
+function save(datarow, datapoint, startdim =0){
+	print("save: "+datapoint.d,0,3);
+	for (let i = dims.length - 1 - startdim; i >= 0; i--) {
+		let d = dims[i];
+		print("ddg: "+d,0,2);
 		let acc = accuracy[d];
+		//If we never save this dim
 		if(acc == -1){continue;}
+
 		let timerow = datarow.values[d];
 		let existing = timerow.length;
+
+		//If we save all values for this dim, or no values exist yet
 		if(acc == 0 || existing == 0){
-			timerow.push({t:when,d:what});
-			print("Estored "+ d,1);
+			timerow.push(datapoint);
+			print("Estored "+ d,0,2);
 		}else{
-			var timesince = new Date(when) - new Date(timerow[timerow.length-1].t);
+			//Some Values already exist
+			var timesince = new Date(datapoint.t) - new Date(timerow[timerow.length-1].t);
+			if(timesince < 0){print("TIMEWARP! ",0,2);}
+			//Shouldl we save this value?
 			if(timesince >= seperations[d]){
-				if(existing < acc){
-					timerow.push({t:when,d:what});
-					print("stored "+ d,1);
+				if(existing <= acc){
+					timerow.push(datapoint);
+					print("stored "+ d,0,2);
 				}else{
-					print("Gotta pop "+ d,1);
+					timerow.push(datapoint);
+					print("stored "+ d,0,2);
+					//we have too many values for this dim
+					print("Gotta pop "+ d,0,3);
 				}
 			}else{
-				print("Not enough time passed to store as"+ d + " (" + timesince + " < " + seperations[d] + ")" ,1);
+				//Throw away value!
+				print("Not enough time passed to store in "+ d + " (" + timesince + " < " + seperations[d] + ")" ,1);
 			}
 		}
 		break;
 	}
+}
 
+
+function normalize(datarow){
+	for (let i = dims.length - 1; i >= 0; i--) {
+		let d = dims[i];
+		let acc = accuracy[d];
+		//If we never save this dim
+		if(acc == -1){continue;}
+		let timerow = datarow.values[d];
+		let existing = timerow.length;
+
+
+		if (existing > acc){
+			print(datarow.name + "Popping "+ d,0,3);
+			//get average
+			let avg = doAverageDim(datarow,d);
+			if(average[d]){
+				//save to data if we doin that
+				datarow.averages[d] = avg;
+			}
+			let datapoint = {t:formatTime(new Date()),d:avg};
+			//save avg to larger dim
+			save(datarow,datapoint,dims.length - i);
+			//pop off extra data
+			datarow.values[d] = timerow.slice(timerow.length - (acc+1));
+		}	else if(acc == 0){
+			let didmove = false;
+			//pop off old data
+			//These better be in order!
+			let now = new Date();
+			for (let j = timerow.length - 1; j >= 0; j--) {
+				if(now - timerow[j].t > durations[d]){
+					//add a new average value to larger dim before popping
+					if(!didmove){
+						let avg = doAverageDim(datarow,d);
+						if(average[d]){
+							//save to data if we doin that
+							datarow.averages[d] = avg;
+						}
+						let datapoint = {t:formatTime(new Date()),d:avg};
+						//save avg to larger dim
+						save(datarow,datapoint,dims.length - i);
+					}
+					didmove = true;
+					print("popping old data"+ timerow[j].d + " _ " + d,0,2);
+					//TODO: actually pop data
+				}
+			}
+
+
+		}
+
+	}
+}
+
+
+
+
+function doAverageDim(datarow, dim){
+	print(datarow.name + "Averaging "+ dim,0,3);
+	let total = 0;
+	let count = 0;
+	for (var i = datarow.values[dim].length - 1; i >= 0; i--) {
+		total += datarow.values[dim][i].d;
+		count++;
+	}
+	let avg = (Math.round((total / count) * 100)) / 100;
+	return avg;
 }
 
 module.exports.printData  =printData;
 module.exports.log = log;
 module.exports.data = data;
+
+
+
+
+
+
+
