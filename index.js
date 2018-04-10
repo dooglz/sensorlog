@@ -1,70 +1,32 @@
 
-let verbose = 4;
+let verbose = 0;
 let timeStorageType = "unix" //actually milseconds
 let data = [];
-let quantities = { year: 12, month: 30, day: 24, hour: 60, minute: 60, second: -1 };
+let quantities = { year: 12, month: 30, day: 24, hour: 60, minute: 60, second: 60 };
 let average = { year: true, month: true, day: true, hour: true, minute: true, second: false };
 let dims = ["year", "month", "day", "hour", "minute", "second"];
 let durations = { year: 31536000000, month: 2592000000, day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
 let separations = {
-	year: Math.floor(durations.year / accuracy.year),
-	month: Math.floor(durations.month / accuracy.month),
-	day: Math.floor(durations.day / accuracy.day),
-	hour: Math.floor(durations.hour / accuracy.hour),
-	minute: Math.floor(durations.minute / accuracy.minute),
-	second: Math.floor(durations.second / accuracy.second),
+	year: Math.floor(durations.year / quantities.year),
+	month: Math.floor(durations.month / quantities.month),
+	day: Math.floor(durations.day / quantities.day),
+	hour: Math.floor(durations.hour / quantities.hour),
+	minute: Math.floor(durations.minute / quantities.minute),
+	second: Math.floor(durations.second / quantities.second),
 };
+let yearoffest = 2018;
+let decimals = 0;
+let discard = true;
 
-function printData() {
-	for (let f of data) {
-		console.log(f.name);
-		let str = "";
-		for (let fv in f.values) {
-			str += fv + "\t ";
-		}
-		console.log(str);
-		str = "";
-		let i = 0;
-		let bl = true;
-		while (bl) {
-			str = "";
-			bl = false;
-			for (let fv in f.values) {
-				if (f.values[fv][i]) {
-					bl = true;
-					str += f.values[fv][i].d + "\t ";
-				} else {
-					str += " " + "\t ";
-				}
-			}
-			console.log(str);
-			i++;
-		}
-		str = "";
-		let str2 = "";
-		for (let fv in f.values) {
-			str += "-" + "\t ";
-			str2 += f.averages[fv] + "\t ";;
-		}
-		console.log(str);
-		console.log(str2);
 
-	}
-}
+
 
 function buildRow() {
-
 	let row = {};
-	row.values = {};
+	row.averages = {};
 	row.raw = [];
-	for (let f in accuracy) {
-		if (accuracy[f] != -1) {
-			row.values[f] = [];
-			if (average[f]) {
-				if (!row.averages) { row.averages = {}; }
-				row.averages[f] = 0;
-			}
-		}
+	for (let f in quantities) {
+		row.averages[f] = [];
 	}
 	return row;
 }
@@ -125,18 +87,32 @@ function save(datarow, datapoint) {
 	datarow.raw.push(datapoint);
 };
 
+function _round(v) {
+	return Math.round(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+function _average(array, element) {
+	if (array.length == 0) { return undefined; }
+	if (element && array[0][element] !== undefined) {
+		if (array.length == 1) { return array[0][element] }
+		return _round(array.reduce((a, b) => a + b[element]) / array.length);
+	}
+	return _round(array.reduce((a, b) => a + b) / array.length);
+}
+
 function isWithin(now, value, width) {
+	value = new Date(value);
+	now = new Date(now);
 	if (value.getFullYear() == now.getFullYear()) {
 		if (width == "year") { return true; }
-		if (value.getMonth()() == now.getMonth()()) {
+		if (value.getMonth() == now.getMonth()) {
 			if (width == "month") { return true; }
-			if (value.getDate()() == now.getDate()()) {
+			if (value.getDate() == now.getDate()) {
 				if (width == "day") { return true; }
-				if (value.getHours()() == now.getHours()()) {
+				if (value.getHours() == now.getHours()) {
 					if (width == "hour") { return true; }
-					if (value.getMinutes()() == now.getMinutes()()) {
+					if (value.getMinutes() == now.getMinutes()) {
 						if (width == "minute") { return true; }
-						if (value.getSeconds()() == now.getSeconds()()) {
+						if (value.getSeconds() == now.getSeconds()) {
 							if (width == "second") { return true; }
 							print("what do you want?!: " + width, 2, 2);
 						}
@@ -150,156 +126,139 @@ function isWithin(now, value, width) {
 
 function normalize(datarow) {
 	//	let now = new Date();
-	const now = datarow.raw[datarow.raw.length];
-	//	let min = now.getMinutes();
+	const now = new Date(datarow.raw[datarow.raw.length - 1].t);
+	//const min = now.getMinutes();
 
-	var boob =4;
-	let count = 0;
-	let avg = 0;
+	if (discard) {
+		datarow.raw = datarow.raw.filter(a => isWithin(now, a.t, "minute"));
+	}
+
 	let vals = {};
-	for (let i = datarow.raw.length; i >= 0; i--) {
+	for (let i = datarow.raw.length - 1; i >= 0; i--) {
 		const element = datarow.raw[i];
-		if (isWithin(now, element.t, "hour")) {
-			if(vals[element.t.getMinutes()] !== undefined){
-				vals[element.t.getMinutes()] = [];
+		const ed = new Date(element.t);
+		if (ed.getFullYear() < yearoffest) {
+			print("New value is really old!", 2, 1);
+			//Well this is a pain. TODO Test This.
+			const nudge = yearoffest - ed.getFullYear();
+			for (let j = 0; j <= nudge; j++) {
+				for (let dr in data) {
+					dr.averages.year.unshift(0);
+				}
 			}
-			vals[element.t.getMinutes()].push(element.d);
-		}else{
-			//This value is too old
-		}
-	}
-	for (let i = 0; i < vals.raw.length; i++) {
-	}
-
-
-	for (let i = 0; i < datarow.raw.length; i++) {
-		const element = datarow.raw[i];
-		if (isWithin(now, element.t, "hour")) {
-			datarow.values.minute[min]
-
-			avg += element.d;
-			count++;
-		} else {
-			//This time was recorded over an hour ago, purge.
-			//old value, purge
-			//datarow.raw.splice(i, 1);
-			//i--; //decrement
 		}
 	}
 
-	avg = avg / count;
-	datarow.values.minute[min] = avg;
+	datarow.averages.second[now.getSeconds()] = _average(datarow.raw.filter((a) => isWithin(now, a.t, "second")), "d");
+	datarow.averages.minute[now.getMinutes()] = _average(datarow.averages.second.filter((a, i) => i <= now.getSeconds()));
+	datarow.averages.hour[now.getHours()] = _average(datarow.averages.minute.filter((a, i) => i <= now.getMinutes()));
+	datarow.averages.day[now.getDate()] = _average(datarow.averages.hour.filter((a, i) => i <= now.getHours()));
+	datarow.averages.month[now.getMonth()] = _average(datarow.averages.day.filter((a, i) => i <= now.getDate()));
+	datarow.averages.year[now.getFullYear() - yearoffest] = _average(datarow.averages.month.filter((a, i) => i <= now.getMonth()));
 };
 
-function save2(datarow, datapoint, startdim = 0) {
-	print("save: " + datapoint.d, 0, 3);
-	for (let i = dims.length - 1 - startdim; i >= 0; i--) {
-		let d = dims[i];
-		print("ddg: " + d, 0, 2);
-		let acc = accuracy[d];
-		//If we never save this dim
-		if (acc == -1) { continue; }
+//Get all data of all sensors
+function getAll() {
+	let ret = {};
+	for (let f of data) {
+		ret[f.name] = get(f.name);
+	}
+	return ret;
+}
 
-		let timerow = datarow.values[d];
-		let existing = timerow.length;
+//Get all data of sensor
+function get(sensor) {
+	const datarow = data.find(function (element) {
+		return element.name === sensor;
+	});
+	if (datarow === undefined) {
+		return undefined;
+	}
+	const latest = datarow.raw[datarow.raw.length - 1];
+	const now = new Date(latest.t);
+	let ret = {
+		second: datarow.averages.second.slice(),
+		minute: datarow.averages.minute.slice(),
+		hour: datarow.averages.hour.slice(),
+		day: datarow.averages.day.slice(),
+		month: datarow.averages.month.slice(),
+		year: datarow.averages.year.slice(),
+		last: latest.d,
+		asof: formatTime(latest.t),
+		raw: datarow.raw.slice()
+	}
+	//reorder ret to make te most sense
+	ret.second = ret.second.reverse().slice(ret.second.length - now.getSeconds() - 1, ret.second.length).concat(ret.second.slice(0, ret.second.length - now.getSeconds() - 1));
+	ret.minute = ret.minute.reverse().slice(ret.minute.length - now.getMinutes() - 1, ret.minute.length).concat(ret.minute.slice(0, ret.minute.length - now.getMinutes() - 1));
+	ret.hour = ret.hour.reverse().slice(ret.hour.length - now.getHours() - 1, ret.hour.length).concat(ret.hour.slice(0, ret.hour.length - now.getHours() - 1));
+	ret.day = ret.day.reverse().slice(ret.day.length - now.getDate() - 1, ret.day.length).concat(ret.day.slice(0, ret.day.length - now.getDate() - 1));
+	ret.month = ret.month.reverse().slice(ret.month.length - now.getMonth() - 1, ret.month.length).concat(ret.month.slice(0, ret.month.length - now.getMonth() - 1));
+	ret.year = ret.year.reverse().slice(ret.year.length - now.getFullYear() - 1, ret.year.length).concat(ret.second.slice(0, ret.year.length - now.getFullYear() - 1));
+	return ret;
+}
 
-		//If we save all values for this dim, or no values exist yet
-		if (acc == 0 || existing == 0) {
-			timerow.push(datapoint);
-			print("Estored " + d, 0, 2);
-		} else {
-			//Some Values already exist
-			var timesince = new Date(datapoint.t) - new Date(timerow[timerow.length - 1].t);
-			if (timesince < 0) { print("TIMEWARP! ", 0, 2); }
-			//Shouldl we save this value?
-			if (timesince >= seperations[d]) {
-				if (existing <= acc) {
-					timerow.push(datapoint);
-					print("stored " + d, 0, 2);
+//Get the latest data we have for all sensors
+function getAllNow() {
+	let ret = {};
+	for (let f of data) {
+		ret[f.name] = getNow(f.name);
+	}
+	return ret;
+};
+
+//Get the latest data we have for sensor
+function getNow(sensor) {
+	const datarow = data.find(function (element) {
+		return element.name === sensor;
+	});
+	if (datarow === undefined) {
+		return undefined;
+	}
+	const latest = datarow.raw[datarow.raw.length - 1].t;
+	return {
+		second: datarow.averages.second[latest.getSeconds()],
+		minute: datarow.averages.minute[latest.getMinutes()],
+		hour: datarow.averages.hour[latest.getHours()],
+		day: datarow.averages.day[latest.getDate()],
+		month: datarow.averages.month[latest.getMonth()],
+		year: datarow.averages.year[latest.getFullYear() - yearoffest],
+		last: latest.d,
+		asof: formatTime(latest.t)
+	}
+}
+
+function printData() {
+	for (let f of data) {
+		console.log(f.name);
+		let str = "";
+		for (let fv in f.averages) {
+			str += fv + "\t ";
+		}
+		console.log(str);
+		str = "";
+		let i = 0;
+		let bl = true;
+		while (bl) {
+			str = "";
+			bl = false;
+			for (let fv in f.averages) {
+				bl = bl || i < f.averages[fv].length;
+				if (f.averages[fv][i]) {
+					str += f.averages[fv][i] + "\t ";
 				} else {
-					timerow.push(datapoint);
-					print("stored " + d, 0, 2);
-					//we have too many values for this dim
-					print("Gotta pop " + d, 0, 3);
-				}
-			} else {
-				//Throw away value!
-				print("Not enough time passed to store in " + d + " (" + timesince + " < " + seperations[d] + ")", 1);
-			}
-		}
-		break;
-	}
-}
-
-
-function normalize2(datarow) {
-	for (let i = dims.length - 1; i >= 0; i--) {
-		let d = dims[i];
-		let acc = accuracy[d];
-		//If we never save this dim
-		if (acc == -1) { continue; }
-		let timerow = datarow.values[d];
-		let existing = timerow.length;
-
-
-		if (existing > acc) {
-			print(datarow.name + "Popping " + d, 0, 3);
-			//get average
-			let avg = doAverageDim(datarow, d);
-			if (average[d]) {
-				//save to data if we doin that
-				datarow.averages[d] = avg;
-			}
-			let datapoint = { t: formatTime(new Date()), d: avg };
-			//save avg to larger dim
-			save(datarow, datapoint, dims.length - i);
-			//pop off extra data
-			datarow.values[d] = timerow.slice(timerow.length - (acc + 1));
-		} else if (acc == 0) {
-			let didmove = false;
-			//pop off old data
-			//These better be in order!
-			let now = new Date();
-			for (let j = timerow.length - 1; j >= 0; j--) {
-				if (now - timerow[j].t > durations[d]) {
-					//add a new average value to larger dim before popping
-					if (!didmove) {
-						let avg = doAverageDim(datarow, d);
-						if (average[d]) {
-							//save to data if we doin that
-							datarow.averages[d] = avg;
-						}
-						let datapoint = { t: formatTime(new Date()), d: avg };
-						//save avg to larger dim
-						save(datarow, datapoint, dims.length - i);
-					}
-					didmove = true;
-					print("popping old data" + timerow[j].d + " _ " + d, 0, 2);
-					//TODO: actually pop data
+					str += " " + "\t ";
 				}
 			}
-
-
+			console.log(str);
+			i++;
 		}
-
 	}
 }
 
-
-
-
-function doAverageDim(datarow, dim) {
-	print(datarow.name + "Averaging " + dim, 0, 3);
-	let total = 0;
-	let count = 0;
-	for (var i = datarow.values[dim].length - 1; i >= 0; i--) {
-		total += datarow.values[dim][i].d;
-		count++;
-	}
-	let avg = (Math.round((total / count) * 100)) / 100;
-	return avg;
-}
-
+module.exports.getAll = getAll;
+module.exports.get = get;
+module.exports.getAllNow = getAllNow;
+module.exports.getNow = getNow;
 module.exports.printData = printData;
 module.exports.log = log;
 module.exports.data = data;
