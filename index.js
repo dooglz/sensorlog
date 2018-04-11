@@ -1,5 +1,5 @@
 
-let verbose = 0;
+let verbosity = 0;
 let timeStorageType = "unix" //actually milseconds
 let data = [];
 let quantities = { year: 12, month: 30, day: 24, hour: 60, minute: 60, second: 60 };
@@ -40,7 +40,7 @@ function formatTime(time) {
 }
 
 function print(msg, lvl = 0, verb = 1) {
-	if (verb > verbose) { return; }
+	if (verb > verbosity) { return; }
 	msg = "SL-" + (new Date()).toISOString() + ": " + msg;
 	if (lvl == 0) {
 		console.log(msg);
@@ -125,10 +125,8 @@ function isWithin(now, value, width) {
 }
 
 function normalize(datarow) {
-	//	let now = new Date();
 	const now = new Date(datarow.raw[datarow.raw.length - 1].t);
-	//const min = now.getMinutes();
-
+	
 	if (discard) {
 		datarow.raw = datarow.raw.filter(a => isWithin(now, a.t, "minute"));
 	}
@@ -227,6 +225,13 @@ function getNow(sensor) {
 	}
 }
 
+function getData(){
+  return data;
+}
+function setData(d){
+	data = d;
+}
+
 function printData() {
 	for (let f of data) {
 		console.log(f.name);
@@ -262,10 +267,4 @@ module.exports.getNow = getNow;
 module.exports.printData = printData;
 module.exports.log = log;
 module.exports.data = data;
-
-
-
-
-
-
-
+module.exports.verbosity = verbosity;
