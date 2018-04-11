@@ -72,9 +72,7 @@ function log(who, what, when = (new Date())) {
 		datarow = buildRow();
 		datarow.name = who;
 		data.push(datarow);
-		if (verbose > 0) {
-			print("New sensor: " + who);
-		}
+		print("New sensor: " + who,0,1);
 	}
 
 	let datapoint = { t: when, d: what };
@@ -126,7 +124,7 @@ function isWithin(now, value, width) {
 
 function normalize(datarow) {
 	const now = new Date(datarow.raw[datarow.raw.length - 1].t);
-	
+
 	if (discard) {
 		datarow.raw = datarow.raw.filter(a => isWithin(now, a.t, "minute"));
 	}

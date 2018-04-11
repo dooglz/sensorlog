@@ -1,6 +1,6 @@
 {
   "name": "sensorlog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "logging and averaging of numeric stats",
   "main": "index.js",
   "scripts": {
