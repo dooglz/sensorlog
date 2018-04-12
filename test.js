@@ -19,7 +19,8 @@ testMin(new Date(),1);
 sensorlog.printData();
 //console.log(sensorlog.getAll());
 console.log(sensorlog.getAllNow());
-
+console.log(sensorlog.getAll());
+let g =6;
 
 function testMin(dt,val){
 	let d = new Date(dt);

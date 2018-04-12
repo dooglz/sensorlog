@@ -193,6 +193,14 @@ function get(sensor) {
 	ret.day = ret.day.reverse().slice(ret.day.length - now.getDate() - 1, ret.day.length).concat(ret.day.slice(0, ret.day.length - now.getDate() - 1));
 	ret.month = ret.month.reverse().slice(ret.month.length - now.getMonth() - 1, ret.month.length).concat(ret.month.slice(0, ret.month.length - now.getMonth() - 1));
 	ret.year = ret.year.reverse().slice(ret.year.length - now.getFullYear() - 1, ret.year.length).concat(ret.second.slice(0, ret.year.length - now.getFullYear() - 1));
+	//remove null elements
+	
+	ret.second = ret.second.filter((n) => n != undefined );
+	ret.minute = ret.minute.filter((n) => n != undefined );
+	ret.hour = ret.hour.filter((n) => n != undefined );
+	ret.day = ret.day.filter((n) => n != undefined );
+	ret.month  =  ret.month.filter((n) => n != undefined );
+	ret.year = ret.year.filter((n) => n != undefined );
 	return ret;
 }
 
