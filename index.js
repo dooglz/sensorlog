@@ -74,6 +74,7 @@ function log(who, what, when = (new Date())) {
 	let datapoint = { t: when, d: what };
 	save(datarow, datapoint);
 	normalize(datarow);
+	return datapoint;
 };
 
 function save(datarow, datapoint) {
