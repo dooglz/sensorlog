@@ -1,4 +1,3 @@
-
 let verbosity = 0;
 let timeStorageType = "unix" //actually milseconds
 let data = [];
@@ -17,9 +16,6 @@ let separations = {
 let yearoffest = 2018;
 let decimals = 0;
 let discard = true;
-
-
-
 
 function buildRow() {
 	let row = {};
@@ -264,7 +260,9 @@ function getData(){
 function setData(d){
    data = d;
 }
-
+function setVerbosity(v){
+	verbosity = v;
+}
 
 module.exports.getAll = getAll;
 module.exports.get = get;
@@ -274,4 +272,4 @@ module.exports.printData = printData;
 module.exports.log = log;
 module.exports.getData = getData;
 module.exports.setData = setData;
-module.exports.verbosity = verbosity;
+module.exports.setVerbosity = setVerbosity;
