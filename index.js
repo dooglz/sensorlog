@@ -68,7 +68,7 @@ function log(who, what, when = (new Date())) {
 		datarow = buildRow();
 		datarow.name = who;
 		data.push(datarow);
-		print("New sensor: " + who,0,1);
+		print("New sensor: " + who, 0, 1);
 	}
 
 	let datapoint = { t: when, d: what };
@@ -88,11 +88,16 @@ function _round(v) {
 }
 function _average(array, element) {
 	if (array.length == 0) { return undefined; }
-	if (element && array[0][element] !== undefined) {
-		if (array.length == 1) { return array[0][element] }
-		return _round(array.reduce((a, b) => a + b[element]) / array.length);
+	let count = 0;
+	let avg = 0;
+	for (let index = 0; index < array.length; index++) {
+		const d = element ? array[index][element] : array[index];
+		if (d !== undefined && d !== null && !isNaN(d)) {
+			avg += d;
+			count++;
+		}
 	}
-	return _round(array.reduce((a, b) => a + b) / array.length);
+	return _round(avg / count);
 }
 
 function isWithin(now, value, width) {
@@ -209,7 +214,7 @@ function getNow(sensor) {
 		return undefined;
 	}
 	const latest = datarow.raw[datarow.raw.length - 1];
-    const now = new Date(latest.t);
+	const now = new Date(latest.t);
 	return {
 		second: datarow.averages.second[now.getSeconds()],
 		minute: datarow.averages.minute[now.getMinutes()],
@@ -222,10 +227,10 @@ function getNow(sensor) {
 	}
 }
 
-function getData(){
-  return data;
+function getData() {
+	return data;
 }
-function setData(d){
+function setData(d) {
 	data = d;
 }
 
@@ -257,13 +262,13 @@ function printData() {
 	}
 }
 
-function getData(){
+function getData() {
 	return data;
 }
-function setData(d){
-   data = d;
+function setData(d) {
+	data = d;
 }
-function setVerbosity(v){
+function setVerbosity(v) {
 	verbosity = v;
 }
 

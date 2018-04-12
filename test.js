@@ -11,15 +11,15 @@ var now = new Date();
 //sensorlog.log("sensor1",33,new Date("01/01/15"));
 
 
-testMin(new Date("01/jan/18"),1);
+testMin(new Date(),1);
 //sensorlog.printData();
 //testHour(new Date("02/jan/18"),100);
 //sensorlog.printData();
 //testHour(new Date("03/jan/18"),1000);
 sensorlog.printData();
-console.log(sensorlog.getAll());
+//console.log(sensorlog.getAll());
 console.log(sensorlog.getAllNow());
-var a = 5;
+
 
 function testMin(dt,val){
 	let d = new Date(dt);
