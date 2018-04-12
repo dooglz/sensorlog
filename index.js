@@ -208,7 +208,7 @@ function getNow(sensor) {
 	if (datarow === undefined) {
 		return undefined;
 	}
-	const latest = datarow.raw[datarow.raw.length - 1].t;
+	const latest = datarow.raw[datarow.raw.length - 1];
     const now = new Date(latest.t);
 	return {
 		second: datarow.averages.second[now.getSeconds()],

@@ -18,7 +18,8 @@ testMin(new Date("01/jan/18"),1);
 //testHour(new Date("03/jan/18"),1000);
 sensorlog.printData();
 console.log(sensorlog.getAll());
-console.log(sensorlog.getAll());
+console.log(sensorlog.getAllNow());
+var a = 5;
 
 function testMin(dt,val){
 	let d = new Date(dt);
