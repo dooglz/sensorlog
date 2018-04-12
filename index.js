@@ -209,15 +209,16 @@ function getNow(sensor) {
 		return undefined;
 	}
 	const latest = datarow.raw[datarow.raw.length - 1].t;
+    const now = new Date(latest.t);
 	return {
-		second: datarow.averages.second[latest.getSeconds()],
-		minute: datarow.averages.minute[latest.getMinutes()],
-		hour: datarow.averages.hour[latest.getHours()],
-		day: datarow.averages.day[latest.getDate()],
-		month: datarow.averages.month[latest.getMonth()],
-		year: datarow.averages.year[latest.getFullYear() - yearoffest],
+		second: datarow.averages.second[now.getSeconds()],
+		minute: datarow.averages.minute[now.getMinutes()],
+		hour: datarow.averages.hour[now.getHours()],
+		day: datarow.averages.day[now.getDate()],
+		month: datarow.averages.month[now.getMonth()],
+		year: datarow.averages.year[now.getFullYear() - yearoffest],
 		last: latest.d,
-		asof: formatTime(latest.t)
+		asof: latest.t
 	}
 }
 
