@@ -258,11 +258,20 @@ function printData() {
 	}
 }
 
+function getData(){
+	return data;
+}
+function setData(d){
+   data = d;
+}
+
+
 module.exports.getAll = getAll;
 module.exports.get = get;
 module.exports.getAllNow = getAllNow;
 module.exports.getNow = getNow;
 module.exports.printData = printData;
 module.exports.log = log;
-module.exports.data = data;
+module.exports.getData = getData;
+module.exports.setData = setData;
 module.exports.verbosity = verbosity;
